@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ko" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OTP 생성기 | WebTools</title>
+    <meta name="description" content="TOTP, HOTP 및 스팀 가드 2FA 코드를 안전하게 계산하는 로컬 일회용 비밀번호 생성기">
+    <link rel="stylesheet" href="../css/tailwind.css">
+    <script src="../js/theme.js" defer></script>
+    <!-- OTPAuth UMD Library -->
+    <script src="../vendor/otpauth.umd.min.js" defer></script>
+</head>
+<body class="bg-google-gray dark:bg-space-deep text-google-text dark:text-gray-100 transition-colors duration-300 min-h-screen flex flex-col font-sans">
+    <!-- Header -->
+    <header class="border-b border-gray-200 dark:border-white/10 bg-white/60 dark:bg-space-card/50 backdrop-blur-xl sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-6">
+                <!-- Home Button -->
+                <a href="../index.html" class="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-space-accent transition-colors font-semibold text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+                    </svg>
+                    <span>Home</span>
+                </a>
+                <span class="text-gray-300 dark:text-white/10 text-lg">|</span>
+                <span class="text-lg font-bold tracking-tight">OTP 생성기</span>
+            </div>
+            
+            <!-- 3-Way Theme Switcher -->
+            <div class="inline-flex rounded-xl p-1 bg-gray-100 dark:bg-space-deep border border-gray-200 dark:border-white/5" id="theme-switcher">
+                <button data-theme="light" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center space-x-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+                    <span>Light</span>
+                </button>
+                <button data-theme="auto" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center space-x-1.5">
+                    <span>Auto</span>
+                </button>
+                <button data-theme="dark" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center space-x-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                    <span>Dark</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-12">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12">
+            
+            <!-- Left Column: Input and Configuration (7 cols) -->
+            <div class="md:col-span-7 space-y-6">
+                <!-- Secret Key Input Card -->
+                <div class="bg-white/60 dark:bg-space-card/50 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-2xl p-6 shadow-xl shadow-black/5">
+                    <h2 class="text-lg font-bold mb-4 flex items-center space-x-2">
+                        <span class="w-1.5 h-5 bg-indigo-500 dark:bg-space-accent rounded-full"></span>
+                        <span>1. 비밀키 입력</span>
+                    </h2>
+                    <div>
+                        <label for="otp-secret" class="block text-sm text-gray-500 dark:text-gray-400 mb-2">Base32 또는 Base64로 인코딩된 비밀키를 입력해 주세요.</label>
+                        <div class="relative flex items-center">
+                            <input type="password" id="otp-secret" class="w-full pl-4 pr-12 py-3 bg-white dark:bg-space-deep border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-space-accent focus:border-indigo-500 dark:focus:border-space-accent outline-none transition-all text-sm font-mono tracking-widest" placeholder="비밀키를 입력하세요 (예: JBSWY3DPEHPK3PXP)">
+                            <button type="button" id="btn-toggle-secret" class="absolute right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none p-1.5 rounded-lg">
+                                <!-- Eye Icon (Closed default) -->
+                                <svg id="icon-eye-closed" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/>
+                                </svg>
+                                <!-- Eye Icon (Open hidden) -->
+                                <svg id="icon-eye-open" class="w-5 h-5 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Configuration Card -->
+                <div class="bg-white/60 dark:bg-space-card/50 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-2xl shadow-xl shadow-black/5 overflow-hidden">
+                    <button type="button" id="btn-toggle-advanced" class="w-full px-6 py-4 flex items-center justify-between font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none">
+                        <span class="flex items-center space-x-2">
+                            <span class="w-1.5 h-5 bg-indigo-500 dark:bg-space-accent rounded-full"></span>
+                            <span>2. 고급 설정</span>
+                        </span>
+                        <svg id="icon-chevron" class="w-5 h-5 transform transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
+                        </svg>
+                    </button>
+                    
+                    <div id="advanced-settings-container" class="hidden px-6 pb-6 pt-2 border-t border-gray-200/50 dark:border-white/5 space-y-6">
+                        <!-- OTP Type -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">인증 유형 (Type)</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <button type="button" id="btn-type-totp" data-type="totp" class="px-3 py-2.5 text-xs sm:text-sm font-semibold rounded-xl border border-indigo-500/20 bg-indigo-500/10 text-indigo-600 dark:text-space-accent dark:bg-space-accent/10 dark:border-space-accent/20 transition-all">
+                                    TOTP (시간)
+                                </button>
+                                <button type="button" id="btn-type-hotp" data-type="hotp" class="px-3 py-2.5 text-xs sm:text-sm font-semibold rounded-xl border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-space-deep/50 transition-all">
+                                    HOTP (카운터)
+                                </button>
+                                <button type="button" id="btn-type-steam" data-type="steam" class="px-3 py-2.5 text-xs sm:text-sm font-semibold rounded-xl border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-space-deep/50 transition-all">
+                                    STEAM (스팀)
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- HOTP Counter Controller (Hidden by default) -->
+                        <div id="hotp-counter-panel" class="hidden p-4 bg-gray-50 dark:bg-space-deep/50 border border-gray-200 dark:border-white/5 rounded-xl space-y-2">
+                            <label for="otp-counter" class="block text-sm font-medium text-gray-700 dark:text-gray-300">카운터 값 (Counter)</label>
+                            <div class="flex items-center space-x-3">
+                                <input type="number" id="otp-counter" value="0" min="0" class="w-full px-3 py-2 text-sm bg-white dark:bg-space-deep border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-space-accent focus:border-indigo-500 dark:focus:border-space-accent outline-none">
+                                <button type="button" id="btn-counter-plus" class="px-4 py-2 bg-indigo-500 dark:bg-space-accent text-white dark:text-space-deep font-bold rounded-xl active:scale-95 transition-all text-lg flex items-center justify-center">
+                                    +
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Hash Algorithm -->
+                        <div>
+                            <label for="otp-algo" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">해시 알고리즘 (Algorithm)</label>
+                            <select id="otp-algo" class="w-full px-3 py-2 text-sm bg-white dark:bg-space-deep border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-space-accent focus:border-indigo-500 dark:focus:border-space-accent outline-none">
+                                <option value="SHA-1" selected>SHA-1 (기본값)</option>
+                                <option value="SHA-256">SHA-256</option>
+                                <option value="SHA-512">SHA-512</option>
+                            </select>
+                        </div>
+
+                        <!-- Period & Digits Grid -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- Period -->
+                            <div>
+                                <label for="otp-period" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">갱신 주기 (Period - 초)</label>
+                                <input type="number" id="otp-period" value="30" min="5" max="300" class="w-full px-3 py-2 text-sm bg-white dark:bg-space-deep border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-space-accent focus:border-indigo-500 dark:focus:border-space-accent outline-none">
+                            </div>
+                            <!-- Digits -->
+                            <div>
+                                <label for="otp-digits" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">코드 자릿수 (Digits)</label>
+                                <select id="otp-digits" class="w-full px-3 py-2 text-sm bg-white dark:bg-space-deep border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-space-accent focus:border-indigo-500 dark:focus:border-space-accent outline-none">
+                                    <option value="6" selected>6자리</option>
+                                    <option value="5">5자리</option>
+                                    <option value="7">7자리</option>
+                                    <option value="8">8자리</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column: OTP Code Display Card (5 cols) -->
+            <div class="md:col-span-5">
+                <div class="bg-white/60 dark:bg-space-card/50 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-2xl p-8 shadow-xl shadow-black/5 flex flex-col items-center justify-center text-center sticky top-24 overflow-hidden min-h-[300px]">
+                    
+                    <!-- Progress Bar (Sleek Horizontal) -->
+                    <div id="progress-bar-container" class="absolute top-0 left-0 right-0 h-1.5 bg-gray-100 dark:bg-space-deep overflow-hidden">
+                        <div id="progress-bar-fill" class="h-full bg-gradient-to-r from-indigo-500 to-space-accent w-full transition-all duration-100 ease-linear"></div>
+                    </div>
+
+                    <!-- Output Container -->
+                    <div id="otp-display-area" class="w-full py-6 flex flex-col items-center justify-center space-y-4">
+                        <!-- Playholder/Normal screen inject -->
+                        <div id="otp-placeholder" class="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 py-8">
+                            <svg class="w-12 h-12 mb-3 animate-pulse" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/>
+                            </svg>
+                            <span class="text-xs font-semibold">비밀키 입력을 기다리는 중...</span>
+                        </div>
+
+                        <!-- OTP Value (Initially hidden) -->
+                        <div id="otp-value-container" class="hidden w-full flex flex-col items-center space-y-4">
+                            <span class="text-xs text-gray-400 dark:text-gray-500 font-semibold tracking-wide uppercase">인증 코드</span>
+                            
+                            <!-- Large copyable code wrapper -->
+                            <div class="relative group cursor-pointer w-full max-w-[280px]">
+                                <div id="otp-code" class="text-4xl sm:text-5xl font-extrabold tracking-widest font-mono py-6 bg-gray-50 dark:bg-space-deep border border-gray-200 dark:border-white/5 rounded-2xl transition-all group-hover:border-indigo-500/40 dark:group-hover:border-space-accent/40 select-none">
+                                    000 000
+                                </div>
+                                <!-- Overlay Tooltip -->
+                                <div class="absolute inset-0 flex items-center justify-center bg-gray-950/80 text-white text-xs font-semibold rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-150 backdrop-blur-xs">
+                                    <span id="copy-tooltip">클릭하여 클립보드에 복사</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Code Metadata Info -->
+                    <div id="otp-info-footer" class="mt-4 pt-4 border-t border-gray-200/50 dark:border-white/5 w-full flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 font-mono">
+                        <span id="info-type">TOTP (SHA-1)</span>
+                        <span id="info-timer" class="font-bold text-indigo-600 dark:text-space-accent">30s 남음</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-200 dark:border-white/10 py-8 mt-12 bg-white/30 dark:bg-space-card/20 backdrop-blur-sm">
+        <div class="max-w-6xl mx-auto px-4 text-center text-sm text-gray-500 dark:text-gray-400">
+            &copy; 2026 WebTools. 100% Client-Side &amp; Privacy-First.
+        </div>
+    </footer>
+
+    <!-- Interactive Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Elements
+            const otpSecretInput = document.getElementById('otp-secret');
+            const btnToggleSecret = document.getElementById('btn-toggle-secret');
+            const iconEyeOpen = document.getElementById('icon-eye-open');
+            const iconEyeClosed = document.getElementById('icon-eye-closed');
+            
+            const btnToggleAdvanced = document.getElementById('btn-toggle-advanced');
+            const advancedSettingsContainer = document.getElementById('advanced-settings-container');
+            const iconChevron = document.getElementById('icon-chevron');
+
+            const btnTypeTotp = document.getElementById('btn-type-totp');
+            const btnTypeHotp = document.getElementById('btn-type-hotp');
+            const btnTypeSteam = document.getElementById('btn-type-steam');
+
+            const hotpCounterPanel = document.getElementById('hotp-counter-panel');
+            const otpCounterInput = document.getElementById('otp-counter');
+            const btnCounterPlus = document.getElementById('btn-counter-plus');
+
+            const otpAlgoSelect = document.getElementById('otp-algo');
+            const otpPeriodInput = document.getElementById('otp-period');
+            const otpDigitsSelect = document.getElementById('otp-digits');
+
+            const progressBarContainer = document.getElementById('progress-bar-container');
+            const progressBarFill = document.getElementById('progress-bar-fill');
+
+            const otpPlaceholder = document.getElementById('otp-placeholder');
+            const otpValueContainer = document.getElementById('otp-value-container');
+            const otpCodeDisplay = document.getElementById('otp-code');
+            const copyTooltip = document.getElementById('copy-tooltip');
+
+            const otpInfoFooter = document.getElementById('otp-info-footer');
+            const infoType = document.getElementById('info-type');
+            const infoTimer = document.getElementById('info-timer');
+
+            // Internal State
+            let otpType = 'totp'; // totp, hotp, steam
+            let currentToken = '';
+
+            // 1. Password Masking Toggle
+            btnToggleSecret.addEventListener('click', () => {
+                if (otpSecretInput.type === 'password') {
+                    otpSecretInput.type = 'text';
+                    iconEyeClosed.classList.add('hidden');
+                    iconEyeOpen.classList.remove('hidden');
+                } else {
+                    otpSecretInput.type = 'password';
+                    iconEyeOpen.classList.add('hidden');
+                    iconEyeClosed.classList.remove('hidden');
+                }
+            });
+
+            // 2. Advanced Settings Panel Toggle
+            btnToggleAdvanced.addEventListener('click', () => {
+                advancedSettingsContainer.classList.toggle('hidden');
+                iconChevron.classList.toggle('rotate-180');
+            });
+
+            // 3. Mode Selection
+            const setType = (type) => {
+                otpType = type;
+                const activeClass = "px-3 py-2.5 text-xs sm:text-sm font-semibold rounded-xl border border-indigo-500/20 bg-indigo-500/10 text-indigo-600 dark:text-space-accent dark:bg-space-accent/10 dark:border-space-accent/20 transition-all";
+                const inactiveClass = "px-3 py-2.5 text-xs sm:text-sm font-semibold rounded-xl border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-space-deep/50 transition-all";
+
+                btnTypeTotp.className = (type === 'totp') ? activeClass : inactiveClass;
+                btnTypeHotp.className = (type === 'hotp') ? activeClass : inactiveClass;
+                btnTypeSteam.className = (type === 'steam') ? activeClass : inactiveClass;
+
+                // Toggle HOTP Counter controller
+                if (type === 'hotp') {
+                    hotpCounterPanel.classList.remove('hidden');
+                    progressBarContainer.classList.add('hidden');
+                } else {
+                    hotpCounterPanel.classList.add('hidden');
+                    progressBarContainer.classList.remove('hidden');
+                }
+
+                // Steam customization lock
+                if (type === 'steam') {
+                    otpDigitsSelect.value = "5";
+                    otpDigitsSelect.disabled = true;
+                    otpAlgoSelect.value = "SHA-1";
+                    otpAlgoSelect.disabled = true;
+                    otpPeriodInput.value = "30";
+                    otpPeriodInput.disabled = true;
+                } else {
+                    otpDigitsSelect.disabled = false;
+                    otpAlgoSelect.disabled = false;
+                    otpPeriodInput.disabled = false;
+                }
+
+                triggerUpdate();
+            };
+
+            btnTypeTotp.addEventListener('click', () => setType('totp'));
+            btnTypeHotp.addEventListener('click', () => setType('hotp'));
+            btnTypeSteam.addEventListener('click', () => setType('steam'));
+
+            // HOTP Counter control
+            btnCounterPlus.addEventListener('click', () => {
+                let val = parseInt(otpCounterInput.value) || 0;
+                otpCounterInput.value = val + 1;
+                triggerUpdate();
+            });
+            otpCounterInput.addEventListener('input', triggerUpdate);
+
+            // Settings Listeners
+            otpAlgoSelect.addEventListener('change', triggerUpdate);
+            otpPeriodInput.addEventListener('input', triggerUpdate);
+            otpDigitsSelect.addEventListener('change', triggerUpdate);
+            otpSecretInput.addEventListener('input', triggerUpdate);
+
+            // 4. Crypto Engine & Token Calculation
+            async function hmacSha(keyBytes, messageBytes, algo) {
+                let hashName = "SHA-1";
+                if (algo === "SHA-256") hashName = "SHA-256";
+                else if (algo === "SHA-512") hashName = "SHA-512";
+
+                const key = await window.crypto.subtle.importKey(
+                    "raw",
+                    keyBytes,
+                    { name: "HMAC", hash: hashName },
+                    false,
+                    ["sign"]
+                );
+                const signature = await window.crypto.subtle.sign(
+                    "HMAC",
+                    key,
+                    messageBytes
+                );
+                return new Uint8Array(signature);
+            }
+
+            async function calculateToken() {
+                const secretRaw = otpSecretInput.value.trim();
+                if (!secretRaw) {
+                    showEmptyState();
+                    return;
+                }
+
+                // Clean secret key
+                const cleanSecret = secretRaw.replace(/[\s-]/g, '').toUpperCase();
+                let secretBytes;
+
+                // Load UMD OTPAuth for Base32/64 decoding
+                if (typeof OTPAuth === 'undefined') {
+                    setTimeout(calculateToken, 50);
+                    return;
+                }
+
+                try {
+                    // Try Base32 first
+                    secretBytes = OTPAuth.Secret.fromBase32(cleanSecret).buffer;
+                } catch (e32) {
+                    try {
+                        // Fallback to Base64
+                        secretBytes = OTPAuth.Secret.fromBase64(cleanSecret).buffer;
+                    } catch (e64) {
+                        showErrorState("비밀키가 유효한 Base32 또는 Base64 형식이 아닙니다.");
+                        return;
+                    }
+                }
+
+                const period = parseInt(otpPeriodInput.value) || 30;
+                const digits = parseInt(otpDigitsSelect.value) || 6;
+                const algorithm = otpAlgoSelect.value;
+                const counterVal = parseInt(otpCounterInput.value) || 0;
+
+                // Derive Counter
+                let counter;
+                if (otpType === 'totp' || otpType === 'steam') {
+                    counter = Math.floor(Date.now() / 1000 / period);
+                } else {
+                    counter = counterVal;
+                }
+
+                // Convert counter to 8-byte big-endian
+                const messageBytes = new Uint8Array(8);
+                let temp = counter;
+                for (let i = 7; i >= 0; i--) {
+                    messageBytes[i] = temp & 0xff;
+                    temp = Math.floor(temp / 256);
+                }
+
+                try {
+                    const hmac = await hmacSha(secretBytes, messageBytes, algorithm);
+                    const offset = hmac[hmac.length - 1] & 0xf;
+                    let codeInt = ((hmac[offset] & 0x7f) << 24) |
+                                  ((hmac[offset + 1] & 0xff) << 16) |
+                                  ((hmac[offset + 2] & 0xff) << 8) |
+                                  (hmac[offset + 3] & 0xff);
+
+                    if (otpType === 'steam') {
+                        const steamAlphabet = '23456789BCDFGHJKMNPQRTVWXY';
+                        let token = '';
+                        for (let i = 0; i < 5; i++) {
+                            token += steamAlphabet.charAt(codeInt % 26);
+                            codeInt = Math.floor(codeInt / 26);
+                        }
+                        displayToken(token);
+                    } else {
+                        const mod = Math.pow(10, digits);
+                        const token = String(codeInt % mod).padStart(digits, '0');
+                        displayToken(token);
+                    }
+                } catch (error) {
+                    console.error(error);
+                    showErrorState("HMAC 연산 중 오류가 발생했습니다.");
+                }
+            }
+
+            // UI State controls
+            const showEmptyState = () => {
+                otpPlaceholder.classList.remove('hidden');
+                otpValueContainer.classList.add('hidden');
+                otpPlaceholder.innerHTML = `
+                    <svg class="w-12 h-12 mb-3 animate-pulse" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/>
+                    </svg>
+                    <span class="text-xs font-semibold">비밀키 입력을 기다리는 중...</span>
+                `;
+                infoTimer.textContent = "-";
+            };
+
+            const showErrorState = (msg) => {
+                otpPlaceholder.classList.remove('hidden');
+                otpValueContainer.classList.add('hidden');
+                otpPlaceholder.innerHTML = `
+                    <svg class="w-12 h-12 mb-3 text-rose-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <span class="text-xs font-semibold text-rose-500 dark:text-rose-400 px-4 text-center leading-relaxed">${msg}</span>
+                `;
+                infoTimer.textContent = "오류";
+            };
+
+            const displayToken = (token) => {
+                currentToken = token;
+                otpPlaceholder.classList.add('hidden');
+                otpValueContainer.classList.remove('hidden');
+
+                // Readability formatting (e.g., 6-digits -> "123 456")
+                if (token.length === 6) {
+                    otpCodeDisplay.textContent = `${token.substring(0, 3)} ${token.substring(3)}`;
+                } else if (token.length === 8) {
+                    otpCodeDisplay.textContent = `${token.substring(0, 4)} ${token.substring(4)}`;
+                } else {
+                    otpCodeDisplay.textContent = token;
+                }
+            };
+
+            function triggerUpdate() {
+                // Update UI text summaries
+                const typeText = otpType.toUpperCase();
+                const algo = otpAlgoSelect.value;
+                infoType.textContent = `${typeText} (${algo})`;
+
+                calculateToken();
+            }
+
+            // 5. Timer Loop (100ms interval for smooth rendering)
+            let lastCalculatedTimeSegment = 0;
+            
+            const timerTick = () => {
+                if (otpType === 'hotp') {
+                    infoTimer.textContent = "수동 갱신";
+                    progressBarFill.style.width = '100%';
+                    return;
+                }
+
+                const period = parseInt(otpPeriodInput.value) || 30;
+                const nowMs = Date.now();
+                const nowSec = nowMs / 1000;
+                const currentSegment = Math.floor(nowSec / period);
+
+                // Recalculate OTP code only when time period segment changes
+                if (currentSegment !== lastCalculatedTimeSegment) {
+                    lastCalculatedTimeSegment = currentSegment;
+                    calculateToken();
+                }
+
+                // Smooth progress transition
+                const elapsedInPeriod = nowSec % period;
+                const fractionRemaining = (period - elapsedInPeriod) / period;
+                progressBarFill.style.width = `${fractionRemaining * 100}%`;
+                
+                // Color alert when remaining time is low (< 6s)
+                if (period - elapsedInPeriod < 6) {
+                    progressBarFill.className = "h-full bg-rose-500 w-full transition-all duration-100 ease-linear";
+                    infoTimer.className = "font-bold text-rose-500 animate-pulse";
+                } else {
+                    progressBarFill.className = "h-full bg-gradient-to-r from-indigo-500 to-space-accent w-full transition-all duration-100 ease-linear";
+                    infoTimer.className = "font-bold text-indigo-600 dark:text-space-accent";
+                }
+
+                infoTimer.textContent = `${Math.ceil(period - elapsedInPeriod)}초 남음`;
+            };
+
+            setInterval(timerTick, 100);
+
+            // 6. Click to copy
+            otpValueContainer.addEventListener('click', () => {
+                if (!currentToken) return;
+                
+                navigator.clipboard.writeText(currentToken).then(() => {
+                    copyTooltip.textContent = "복사 완료! 👍";
+                    setTimeout(() => {
+                        copyTooltip.textContent = "클릭하여 클립보드에 복사";
+                    }, 1500);
+                }).catch(err => {
+                    console.error("클립보드 복사 실패", err);
+                });
+            });
+
+            // Initial trigger
+            triggerUpdate();
+        });
+    </script>
+</body>
+</html>

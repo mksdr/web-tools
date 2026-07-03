@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="ko" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>픽셀 아트 에디터 | WebTools</title>
+    <meta name="description" content="웹 브라우저에서 픽셀 아트를 그리고 선명한 고해상도 PNG/SVG 파일로 내보내는 드로잉 도구">
+    <link rel="stylesheet" href="../css/tailwind.css">
+    <script src="../js/theme.js" defer></script>
+    <style>
+        /* 라이트/다크 테마별 투명 배경 바둑판(Checkered) 패턴 정의 */
+        .checkered-pattern {
+            background-color: #ffffff;
+            background-image: linear-gradient(45deg, #f3f4f6 25%, transparent 25%),
+                              linear-gradient(-45deg, #f3f4f6 25%, transparent 25%),
+                              linear-gradient(45deg, transparent 75%, #f3f4f6 75%),
+                              linear-gradient(-45deg, transparent 75%, #f3f4f6 75%);
+            background-size: 16px 16px;
+            background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+        }
+        .dark .checkered-pattern {
+            background-color: #161629;
+            background-image: linear-gradient(45deg, #0b0b16 25%, transparent 25%),
+                              linear-gradient(-45deg, #0b0b16 25%, transparent 25%),
+                              linear-gradient(45deg, transparent 75%, #0b0b16 75%),
+                              linear-gradient(-45deg, transparent 75%, #0b0b16 75%);
+            background-size: 16px 16px;
+            background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+        }
+
+        /* 픽셀 셀 드래그 선택 방지 */
+        .pixel-cell {
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+    </style>
+</head>
+<body class="bg-google-gray dark:bg-space-deep text-google-text dark:text-gray-100 transition-colors duration-300 min-h-screen flex flex-col font-sans">
+    <!-- Header -->
+    <header class="border-b border-gray-200 dark:border-white/10 bg-white/60 dark:bg-space-card/50 backdrop-blur-xl sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-6">
+                <!-- Home Button -->
+                <a href="../index.html" class="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-space-accent transition-colors font-semibold text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+                    </svg>
+                    <span>Home</span>
+                </a>
+                <span class="text-gray-300 dark:text-white/10 text-lg">|</span>
+                <span class="text-lg font-bold tracking-tight">픽셀 아트 에디터</span>
+            </div>
+            
+            <!-- 3-Way Theme Switcher -->
+            <div class="inline-flex rounded-xl p-1 bg-gray-100 dark:bg-space-deep border border-gray-200 dark:border-white/5" id="theme-switcher">
+                <button data-theme="light" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center space-x-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+                    <span>Light</span>
+                </button>
+                <button data-theme="auto" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center space-x-1.5">
+                    <span>Auto</span>
+                </button>
+                <button data-theme="dark" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center space-x-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                    <span>Dark</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-12">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12">
+            
+            <!-- Left Column: Toolbar and Palettes (5 cols) -->
+            <div class="md:col-span-5 space-y-6">
+                <!-- Grid Dimensions Card -->
+                <div class="bg-white/60 dark:bg-space-card/50 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-2xl p-6 shadow-xl shadow-black/5">
+                    <h2 class="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4 flex items-center space-x-2">
+                        <span class="w-1 h-4 bg-indigo-500 dark:bg-space-accent rounded-full"></span>
+                        <span>1. 그리드 크기 설정</span>
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <!-- Presets -->
+                        <div class="grid grid-cols-4 gap-2">
+                            <button type="button" data-size="8" class="btn-grid-preset py-2 text-xs font-semibold rounded-xl border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-space-deep/50 transition-all">
+                                8x8
+                            </button>
+                            <button type="button" data-size="16" class="btn-grid-preset py-2 text-xs font-semibold rounded-xl border border-indigo-500/20 bg-indigo-500/10 text-indigo-600 dark:text-space-accent dark:bg-space-accent/10 dark:border-space-accent/20 transition-all">
+                                16x16
+                            </button>
+                            <button type="button" data-size="32" class="btn-grid-preset py-2 text-xs font-semibold rounded-xl border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-space-deep/50 transition-all">
+                                32x32
+                            </button>
+                            <button type="button" data-size="48" class="btn-grid-preset py-2 text-xs font-semibold rounded-xl border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-space-deep/50 transition-all">
+                                48x48
+                            </button>
+                        </div>
+
+                        <!-- Custom Sizing -->
+                        <div class="flex items-center space-x-3">
+                            <div class="flex items-center space-x-2 flex-grow">
+                                <input type="number" id="input-cols" value="16" min="4" max="64" class="w-full px-3 py-2 text-center text-sm bg-white dark:bg-space-deep border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-space-accent focus:border-indigo-500 dark:focus:border-space-accent outline-none font-mono">
+                                <span class="text-xs text-gray-400 dark:text-gray-500">X</span>
+                                <input type="number" id="input-rows" value="16" min="4" max="64" class="w-full px-3 py-2 text-center text-sm bg-white dark:bg-space-deep border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-space-accent focus:border-indigo-500 dark:focus:border-space-accent outline-none font-mono">
+                            </div>
+                            <button type="button" id="btn-recreate-grid" class="px-4 py-2 bg-gray-100 dark:bg-space-deep border border-gray-200 dark:border-white/10 hover:bg-gray-200 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300 font-bold rounded-xl active:scale-95 transition-all text-xs">
+                                리사이즈
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tools & Colors Card -->
+                <div class="bg-white/60 dark:bg-space-card/50 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-2xl p-6 shadow-xl shadow-black/5 space-y-6">
+                    <h2 class="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 flex items-center space-x-2">
+                        <span class="w-1 h-4 bg-indigo-500 dark:bg-space-accent rounded-full"></span>
+                        <span>2. 드로잉 도구 및 색상</span>
+                    </h2>
+
+                    <!-- Tool Buttons Grid -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">편집 도구</label>
+                        <div class="grid grid-cols-4 gap-2">
+                            <!-- Pencil -->
+                            <button type="button" id="tool-pencil" data-tool="pencil" class="btn-tool py-2.5 rounded-xl border border-indigo-500/20 bg-indigo-500/10 text-indigo-600 dark:text-space-accent dark:bg-space-accent/10 dark:border-space-accent/20 transition-all flex flex-col items-center justify-center space-y-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"/>
+                                </svg>
+                                <span class="text-[10px] font-semibold">연필</span>
+                            </button>
+                            <!-- Eraser -->
+                            <button type="button" id="tool-eraser" data-tool="eraser" class="btn-tool py-2.5 rounded-xl border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-space-deep/50 transition-all flex flex-col items-center justify-center space-y-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span class="text-[10px] font-semibold">지우개</span>
+                            </button>
+                            <!-- Bucket -->
+                            <button type="button" id="tool-bucket" data-tool="bucket" class="btn-tool py-2.5 rounded-xl border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-space-deep/50 transition-all flex flex-col items-center justify-center space-y-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.656 48.656 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3l-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3l-3 3"/>
+                                </svg>
+                                <span class="text-[10px] font-semibold">페인트통</span>
+                            </button>
+                            <!-- Eyedropper -->
+                            <button type="button" id="tool-picker" data-tool="picker" class="btn-tool py-2.5 rounded-xl border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-space-deep/50 transition-all flex flex-col items-center justify-center space-y-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 15l6-6m0 0l-3-3m3 3L9 21H3v-6L15 3l3 3L6 18"/>
+                                </svg>
+                                <span class="text-[10px] font-semibold">스포이트</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Custom Color Picker -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">커스텀 색상 선택</label>
+                        <div class="flex items-center space-x-2">
+                            <input type="color" id="draw-color-picker" value="#6366f1" class="w-10 h-10 rounded-xl border-0 cursor-pointer p-0 bg-transparent">
+                            <input type="text" id="draw-color-text" value="#6366F1" class="flex-grow min-w-0 px-3 py-2 text-sm bg-white dark:bg-space-deep border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-space-accent focus:border-indigo-500 dark:focus:border-space-accent outline-none uppercase font-mono">
+                        </div>
+                    </div>
+
+                    <!-- Presets Color Palette -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">퀵 컬러 팔레트</label>
+                        <div id="palette-grid" class="grid grid-cols-8 gap-2 bg-gray-50 dark:bg-space-deep/50 border border-gray-200 dark:border-white/5 p-3 rounded-2xl">
+                            <!-- JS Inject preset colors -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Utilities Card -->
+                <div class="bg-white/60 dark:bg-space-card/50 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-2xl p-6 shadow-xl shadow-black/5">
+                    <h2 class="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4 flex items-center space-x-2">
+                        <span class="w-1 h-4 bg-indigo-500 dark:bg-space-accent rounded-full"></span>
+                        <span>3. 유틸리티 및 보조 작업</span>
+                    </h2>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" id="btn-fill-all" class="px-4 py-2.5 text-xs font-semibold rounded-xl bg-gray-100 dark:bg-space-deep border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/5 active:scale-95 transition-all">
+                            도화지 채우기
+                        </button>
+                        <button type="button" id="btn-clear" class="px-4 py-2.5 text-xs font-semibold rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500/20 active:scale-95 transition-all">
+                            도화지 비우기
+                        </button>
+                    </div>
+                    <div class="mt-3">
+                        <button type="button" id="btn-toggle-grid-lines" class="w-full px-4 py-2.5 text-xs font-semibold rounded-xl bg-gray-100 dark:bg-space-deep border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/5 active:scale-95 transition-all flex items-center justify-center space-x-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/>
+                            </svg>
+                            <span>격자선 감추기</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column: Interactive Canvas & Exporter (7 cols) -->
+            <div class="md:col-span-7 space-y-6">
+                <!-- Interactive Grid Canvas Card -->
+                <div class="bg-white/60 dark:bg-space-card/50 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-2xl p-6 shadow-xl shadow-black/5 flex flex-col items-center justify-center">
+                    
+                    <!-- Checkered Canvas Container -->
+                    <div id="grid-outer-container" class="w-full max-w-[400px] aspect-square rounded-2xl p-4 bg-gray-50 dark:bg-space-deep/80 border border-gray-200 dark:border-white/5 flex items-center justify-center shadow-inner">
+                        <div id="pixel-grid" class="checkered-pattern grid w-full h-full border border-gray-200 dark:border-white/10 rounded-xl overflow-hidden cursor-crosshair">
+                            <!-- Cells dynamically injected -->
+                        </div>
+                    </div>
+
+                    <div class="mt-4 text-center">
+                        <span class="text-xs text-gray-500 dark:text-gray-400">마우스 클릭 또는 클릭한 상태로 **드래그**하여 픽셀을 그릴 수 있습니다.</span>
+                    </div>
+                </div>
+
+                <!-- Export Options Card -->
+                <div class="bg-white/60 dark:bg-space-card/50 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-2xl p-6 shadow-xl shadow-black/5 space-y-6">
+                    <h2 class="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 flex items-center space-x-2">
+                        <span class="w-1 h-4 bg-indigo-500 dark:bg-space-accent rounded-full"></span>
+                        <span>4. 이미지 내보내기 및 스케일</span>
+                    </h2>
+
+                    <!-- Scaling Dropdown -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="export-scale" class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">내보내기 스케일 (배율)</label>
+                            <select id="export-scale" class="w-full px-3 py-2 text-sm bg-white dark:bg-space-deep border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-space-accent focus:border-indigo-500 dark:focus:border-space-accent outline-none">
+                                <option value="1">1배 (원본 1x1 픽셀)</option>
+                                <option value="10">10배 확대 (저해상도)</option>
+                                <option value="20" selected>20배 확대 (표준 320px~)</option>
+                                <option value="32">32배 확대 (고해상도 512px~)</option>
+                                <option value="50">50배 확대 (초고해상도 800px~)</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-col justify-end">
+                            <div class="text-xs text-gray-500 dark:text-gray-400 mb-2 font-mono">
+                                다운로드 해상도: <span id="lbl-resolution" class="font-bold text-indigo-500 dark:text-space-accent">320 x 320 px</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 pt-2">
+                        <button id="btn-download-png" class="py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 dark:from-space-accent dark:to-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 dark:shadow-space-accent/10 hover:opacity-90 active:scale-95 transition-all text-sm flex items-center justify-center space-x-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            <span>PNG 다운로드</span>
+                        </button>
+                        <button id="btn-download-svg" class="py-3 bg-gray-100 dark:bg-space-deep text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl active:scale-95 transition-all text-sm flex items-center justify-center space-x-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                            </svg>
+                            <span>SVG 다운로드</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-200 dark:border-white/10 py-8 mt-12 bg-white/30 dark:bg-space-card/20 backdrop-blur-sm">
+        <div class="max-w-6xl mx-auto px-4 text-center text-sm text-gray-500 dark:text-gray-400">
+            &copy; 2026 WebTools. 100% Client-Side &amp; Privacy-First.
+        </div>
+    </footer>
+
+    <!-- Interactive Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Preset palette colors (NES style + basic modern retro colors)
+            const colorPresets = [
+                "#000000", "#ffffff", "#4b5563", "#9ca3af", "#ef4444", "#f97316", "#f59e0b", "#10b981",
+                "#06b6d4", "#3b82f6", "#6366f1", "#8b5cf6", "#ec4899", "#78350f", "#f43f5e", "#10b981",
+                "#1e1b4b", "#311042", "#0c4a6e", "#14532d", "#7c2d12", "#7f1d1d", "#fbcfe8", "#e0e7ff"
+            ];
+
+            // DOM select
+            const pixelGrid = document.getElementById('pixel-grid');
+            const drawColorPicker = document.getElementById('draw-color-picker');
+            const drawColorText = document.getElementById('draw-color-text');
+            const paletteGrid = document.getElementById('palette-grid');
+
+            const inputCols = document.getElementById('input-cols');
+            const inputRows = document.getElementById('input-rows');
+            const btnRecreateGrid = document.getElementById('btn-recreate-grid');
+            
+            const btnFillAll = document.getElementById('btn-fill-all');
+            const btnClear = document.getElementById('btn-clear');
+            const btnToggleGridLines = document.getElementById('btn-toggle-grid-lines');
+            
+            const exportScaleSelect = document.getElementById('export-scale');
+            const lblResolution = document.getElementById('lbl-resolution');
+            const btnDownloadPng = document.getElementById('btn-download-png');
+            const btnDownloadSvg = document.getElementById('btn-download-svg');
+
+            // Draw State
+            let rows = 16;
+            let cols = 16;
+            let currentTool = 'pencil'; // pencil, eraser, bucket, picker
+            let isDrawing = false;
+            let gridLinesVisible = true;
+            let canvasState = []; // 2D array of colors (null for transparent)
+
+            // Setup Preset Palettes
+            const initPalette = () => {
+                paletteGrid.innerHTML = '';
+                colorPresets.forEach(color => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = "w-6 h-6 rounded-lg shadow-sm border border-black/5 dark:border-white/5 active:scale-95 transition-all cursor-pointer";
+                    btn.style.backgroundColor = color;
+                    btn.addEventListener('click', () => {
+                        drawColorPicker.value = color;
+                        drawColorText.value = color.toUpperCase();
+                    });
+                    paletteGrid.appendChild(btn);
+                });
+            };
+
+            // Reconstruct canvas state and redraw grid DOM
+            const buildGrid = (targetRows, targetCols, loadSaved = true) => {
+                rows = targetRows;
+                cols = targetCols;
+
+                // Sync Inputs
+                inputRows.value = rows;
+                inputCols.value = cols;
+
+                // Set Grid template styles
+                pixelGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+                pixelGrid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+
+                // Initialize State array
+                canvasState = Array(rows).fill().map(() => Array(cols).fill(null));
+
+                // Load saved state if any and sizes match
+                if (loadSaved) {
+                    try {
+                        const saved = localStorage.getItem('pixel_art_canvas_state');
+                        if (saved) {
+                            const parsed = JSON.parse(saved);
+                            if (parsed.length === rows && parsed[0].length === cols) {
+                                canvasState = parsed;
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Load canvas failed:", e);
+                    }
+                }
+
+                // Render DOM cells
+                pixelGrid.innerHTML = '';
+                for (let y = 0; y < rows; y++) {
+                    for (let x = 0; x < cols; x++) {
+                        const cell = document.createElement('div');
+                        cell.className = `pixel-cell aspect-square transition-all duration-100 ${gridLinesVisible ? 'border-[0.5px] border-gray-200/50 dark:border-white/5' : 'border-0'}`;
+                        cell.dataset.x = x;
+                        cell.dataset.y = y;
+
+                        // Apply color if any
+                        const color = canvasState[y][x];
+                        if (color) {
+                            cell.style.backgroundColor = color;
+                        }
+
+                        // Event binding
+                        cell.addEventListener('mousedown', (e) => {
+                            e.preventDefault();
+                            isDrawing = true;
+                            applyTool(cell, x, y);
+                        });
+
+                        cell.addEventListener('mouseenter', () => {
+                            if (isDrawing) {
+                                applyTool(cell, x, y);
+                            }
+                        });
+
+                        pixelGrid.appendChild(cell);
+                    }
+                }
+
+                updateResolutionLabel();
+                autoSave();
+            };
+
+            // Apply selected editing tool
+            const applyTool = (cell, x, y) => {
+                const color = drawColorPicker.value;
+
+                if (currentTool === 'pencil') {
+                    canvasState[y][x] = color;
+                    cell.style.backgroundColor = color;
+                } else if (currentTool === 'eraser') {
+                    canvasState[y][x] = null;
+                    cell.style.backgroundColor = '';
+                } else if (currentTool === 'picker') {
+                    const picked = canvasState[y][x];
+                    if (picked) {
+                        drawColorPicker.value = picked;
+                        drawColorText.value = picked.toUpperCase();
+                    }
+                    // Reset to pencil after pick
+                    setTool('pencil');
+                } else if (currentTool === 'bucket') {
+                    const targetColor = canvasState[y][x];
+                    if (targetColor === color) return; // same color, stop
+                    floodFill(x, y, targetColor, color);
+                }
+                autoSave();
+            };
+
+            // Flood Fill algorithm (BFS)
+            const floodFill = (startX, startY, targetColor, replacementColor) => {
+                const queue = [[startX, startY]];
+                
+                while (queue.length > 0) {
+                    const [cx, cy] = queue.shift();
+                    
+                    if (cx < 0 || cx >= cols || cy < 0 || cy >= rows) continue;
+                    if (canvasState[cy][cx] !== targetColor) continue;
+
+                    // Set Color
+                    canvasState[cy][cx] = replacementColor;
+                    const cell = pixelGrid.querySelector(`[data-x="${cx}"][data-y="${cy}"]`);
+                    if (cell) {
+                        cell.style.backgroundColor = replacementColor || '';
+                    }
+
+                    // Push neighbors
+                    queue.push([cx + 1, cy]);
+                    queue.push([cx - 1, cy]);
+                    queue.push([cx, cy + 1]);
+                    queue.push([cx, cy - 1]);
+                }
+            };
+
+            // Tool state controllers
+            const setTool = (tool) => {
+                currentTool = tool;
+                document.querySelectorAll('.btn-tool').forEach(btn => {
+                    const btnTool = btn.getAttribute('data-tool');
+                    const activeClass = "btn-tool py-2.5 rounded-xl border border-indigo-500/20 bg-indigo-500/10 text-indigo-600 dark:text-space-accent dark:bg-space-accent/10 dark:border-space-accent/20 transition-all flex flex-col items-center justify-center space-y-1";
+                    const inactiveClass = "btn-tool py-2.5 rounded-xl border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-space-deep/50 transition-all flex flex-col items-center justify-center space-y-1";
+                    btn.className = (btnTool === tool) ? activeClass : inactiveClass;
+                });
+            };
+
+            document.querySelectorAll('.btn-tool').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    setTool(btn.getAttribute('data-tool'));
+                });
+            });
+
+            // Sync Color Picker with HEX Textbox
+            drawColorPicker.addEventListener('input', (e) => {
+                drawColorText.value = e.target.value.toUpperCase();
+            });
+
+            drawColorText.addEventListener('input', (e) => {
+                const val = e.target.value;
+                if (/^#[0-9A-F]{6}$/i.test(val)) {
+                    drawColorPicker.value = val;
+                }
+            });
+
+            // Grid sizes presets
+            document.querySelectorAll('.btn-grid-preset').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const size = parseInt(btn.getAttribute('data-size'));
+                    
+                    if (confirm("새로운 크기로 격자를 만드시겠습니까? 기존 그림은 지워집니다.")) {
+                        // Highlight selected preset
+                        document.querySelectorAll('.btn-grid-preset').forEach(b => {
+                            b.className = "btn-grid-preset py-2 text-xs font-semibold rounded-xl border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-space-deep/50 transition-all";
+                        });
+                        btn.className = "btn-grid-preset py-2 text-xs font-semibold rounded-xl border border-indigo-500/20 bg-indigo-500/10 text-indigo-600 dark:text-space-accent dark:bg-space-accent/10 dark:border-space-accent/20 transition-all";
+
+                        buildGrid(size, size, false);
+                    }
+                });
+            });
+
+            // Recreate Custom Sized Grid
+            btnRecreateGrid.addEventListener('click', () => {
+                let r = parseInt(inputRows.value) || 16;
+                let c = parseInt(inputCols.value) || 16;
+
+                // Restrict min max
+                if (r < 4) r = 4;
+                if (r > 64) r = 64;
+                if (c < 4) c = 4;
+                if (c > 64) c = 64;
+
+                inputRows.value = r;
+                inputCols.value = c;
+
+                if (confirm("새로운 크기로 격자를 만드시겠습니까? 기존 그림은 지워집니다.")) {
+                    // Remove preset highlights
+                    document.querySelectorAll('.btn-grid-preset').forEach(b => {
+                        b.className = "btn-grid-preset py-2 text-xs font-semibold rounded-xl border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-space-deep/50 transition-all";
+                    });
+                    buildGrid(r, c, false);
+                }
+            });
+
+            // Fill entire canvas
+            btnFillAll.addEventListener('click', () => {
+                const color = drawColorPicker.value;
+                for (let y = 0; y < rows; y++) {
+                    for (let x = 0; x < cols; x++) {
+                        canvasState[y][x] = color;
+                    }
+                }
+                // Redraw styles
+                pixelGrid.querySelectorAll('.pixel-cell').forEach(cell => {
+                    cell.style.backgroundColor = color;
+                });
+                autoSave();
+            });
+
+            // Clear entire canvas
+            btnClear.addEventListener('click', () => {
+                if (confirm("정말 도화지를 모두 비우시겠습니까?")) {
+                    for (let y = 0; y < rows; y++) {
+                        for (let x = 0; x < cols; x++) {
+                            canvasState[y][x] = null;
+                        }
+                    }
+                    pixelGrid.querySelectorAll('.pixel-cell').forEach(cell => {
+                        cell.style.backgroundColor = '';
+                    });
+                    autoSave();
+                }
+            });
+
+            // Grid Lines Toggler
+            btnToggleGridLines.addEventListener('click', () => {
+                gridLinesVisible = !gridLinesVisible;
+                pixelGrid.querySelectorAll('.pixel-cell').forEach(cell => {
+                    if (gridLinesVisible) {
+                        cell.classList.add('border-[0.5px]', 'border-gray-200/50', 'dark:border-white/5');
+                    } else {
+                        cell.classList.remove('border-[0.5px]', 'border-gray-200/50', 'dark:border-white/5');
+                    }
+                });
+
+                // Style Toggle Button
+                if (gridLinesVisible) {
+                    btnToggleGridLines.innerHTML = `
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/>
+                        </svg>
+                        <span>격자선 감추기</span>
+                    `;
+                } else {
+                    btnToggleGridLines.innerHTML = `
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/>
+                        </svg>
+                        <span>격자선 보이기</span>
+                    `;
+                }
+            });
+
+            // Global Mouseup tracker to stop drawing
+            window.addEventListener('mouseup', () => {
+                isDrawing = false;
+            });
+            pixelGrid.addEventListener('mouseleave', () => {
+                isDrawing = false;
+            });
+
+            // Export Scale Indicator
+            const updateResolutionLabel = () => {
+                const scale = parseInt(exportScaleSelect.value);
+                lblResolution.textContent = `${cols * scale} x ${rows * scale} px`;
+            };
+            exportScaleSelect.addEventListener('change', updateResolutionLabel);
+
+            // Export PNG
+            btnDownloadPng.addEventListener('click', () => {
+                const scale = parseInt(exportScaleSelect.value);
+                const width = cols * scale;
+                const height = rows * scale;
+
+                // Create offscreen canvas
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+
+                // Disable antialiasing for crisp pixel scaling (Nearest Neighbor)
+                ctx.imageSmoothingEnabled = false;
+
+                // Draw cells
+                for (let y = 0; y < rows; y++) {
+                    for (let x = 0; x < cols; x++) {
+                        const color = canvasState[y][x];
+                        if (color) {
+                            ctx.fillStyle = color;
+                            ctx.fillRect(x * scale, y * scale, scale, scale);
+                        }
+                    }
+                }
+
+                // Download execution
+                const link = document.createElement('a');
+                link.download = `pixelart_${Date.now()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+
+            // Export SVG
+            btnDownloadSvg.addEventListener('click', () => {
+                const scale = 10; // base scale in SVG for crisp view
+                let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${cols * scale} ${rows * scale}" width="${cols * scale}" height="${rows * scale}" shape-rendering="crispEdges">\n`;
+                
+                for (let y = 0; y < rows; y++) {
+                    for (let x = 0; x < cols; x++) {
+                        const color = canvasState[y][x];
+                        if (color) {
+                            svgContent += `  <rect x="${x * scale}" y="${y * scale}" width="${scale}" height="${scale}" fill="${color}" />\n`;
+                        }
+                    }
+                }
+                svgContent += `</svg>`;
+
+                // Download execution via blob
+                const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.download = `pixelart_${Date.now()}.svg`;
+                link.href = url;
+                link.click();
+
+                // Clean memory
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+            });
+
+            // Auto-Save feature
+            const autoSave = () => {
+                try {
+                    localStorage.setItem('pixel_art_canvas_state', JSON.stringify(canvasState));
+                } catch (e) {
+                    console.error("Save failed:", e);
+                }
+            };
+
+            // Start up
+            initPalette();
+            buildGrid(16, 16, true);
+        });
+    </script>
+</body>
+</html>

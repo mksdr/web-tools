@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ko" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR 코드 생성기 | WebTools</title>
+    <meta name="description" content="실시간으로 스타일을 지정하고 다운로드할 수 있는 QR 코드 생성기">
+    <link rel="stylesheet" href="../css/tailwind.css">
+    <script src="../js/theme.js" defer></script>
+    <script src="../vendor/qr-code-styling.js" defer></script>
+    <style>
+        /* 프리뷰 영역 내 QR 코드 크기 고정 및 반응형 처리 */
+        #canvas-container canvas, 
+        #canvas-container svg {
+            max-width: 280px !important;
+            max-height: 280px !important;
+            width: 100% !important;
+            height: auto !important;
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-google-gray dark:bg-space-deep text-google-text dark:text-gray-100 transition-colors duration-300 min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="border-b border-gray-200 dark:border-white/10 bg-white/60 dark:bg-space-card/50 backdrop-blur-xl sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-6">
+                <!-- Home Button -->
+                <a href="../index.html" class="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-space-accent transition-colors font-semibold text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+                    </svg>
+                    <span>Home</span>
+                </a>
+                <span class="text-gray-300 dark:text-white/10 text-lg">|</span>
+                <span class="text-lg font-bold tracking-tight">QR 코드 생성기</span>
+            </div>
+            
+            <!-- 3-Way Theme Switcher -->
+            <div class="inline-flex rounded-xl p-1 bg-gray-100 dark:bg-space-deep border border-gray-200 dark:border-white/5" id="theme-switcher">
+                <button data-theme="light" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center space-x-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+                    <span>Light</span>
+                </button>
+                <button data-theme="auto" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center space-x-1.5">
+                    <span>Auto</span>
+                </button>
+                <button data-theme="dark" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center space-x-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                    <span>Dark</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content (Two-Column Layout) -->
+    <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-12">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12">
+            
+            <!-- Left Column: Settings (7 cols) -->
+            <div class="md:col-span-7 space-y-6">
+                <!-- Data Input Card -->
+                <div class="bg-white/60 dark:bg-space-card/50 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-2xl p-6 shadow-xl shadow-black/5">
+                    <h2 class="text-lg font-bold mb-4 flex items-center space-x-2">
+                        <span class="w-1.5 h-5 bg-indigo-500 dark:bg-space-accent rounded-full"></span>
+                        <span>1. 데이터 입력</span>
+                    </h2>
+                    <div>
+                        <label for="qr-data" class="block text-sm text-gray-500 dark:text-gray-400 mb-2">QR 코드로 변환할 텍스트 또는 URL을 입력해 주세요.</label>
+                        <textarea id="qr-data" rows="3" maxlength="1200" class="w-full px-4 py-3 bg-white dark:bg-space-deep border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-space-accent focus:border-indigo-500 dark:focus:border-space-accent outline-none transition-all resize-none text-sm leading-relaxed" placeholder="여기에 텍스트나 주소를 입력해 보세요."></textarea>
+                        <div class="flex justify-end mt-1.5">
+                            <span id="qr-char-counter" class="text-xs text-gray-400 dark:text-gray-500 font-mono">0 / 1200 자</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customization Options Card -->
+                <div class="bg-white/60 dark:bg-space-card/50 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-2xl p-6 shadow-xl shadow-black/5 space-y-6">
+                    <h2 class="text-lg font-bold mb-2 flex items-center space-x-2">
+                        <span class="w-1.5 h-5 bg-indigo-500 dark:bg-space-accent rounded-full"></span>
+                        <span>2. 디자인 및 커스텀</span>
+                    </h2>
+
+                    <!-- Colors -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">전경색 (Foreground)</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="color" id="qr-color-fg" value="#0b0b16" class="w-10 h-10 rounded-xl border-0 cursor-pointer p-0 bg-transparent">
+                                <input type="text" id="qr-color-fg-text" value="#0b0b16" class="flex-grow min-w-0 px-3 py-2 text-sm bg-white dark:bg-space-deep border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-space-accent focus:border-indigo-500 dark:focus:border-space-accent outline-none uppercase font-mono">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">배경색 (Background)</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="color" id="qr-color-bg" value="#ffffff" class="w-10 h-10 rounded-xl border-0 cursor-pointer p-0 bg-transparent">
+                                <input type="text" id="qr-color-bg-text" value="#ffffff" class="flex-grow min-w-0 px-3 py-2 text-sm bg-white dark:bg-space-deep border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-space-accent focus:border-indigo-500 dark:focus:border-space-accent outline-none uppercase font-mono">
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="border-gray-200 dark:border-white/5">
+
+                    <!-- Error Correction and Sizing -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <!-- ECC Level -->
+                        <div>
+                            <div class="flex items-center mb-2">
+                                <label for="qr-ecc" class="block text-sm font-medium text-gray-700 dark:text-gray-300">오류 복원력 (ECC)</label>
+                                <!-- Tooltip wrapper -->
+                                <div class="relative group inline-block ml-2 cursor-pointer text-gray-400 hover:text-indigo-500 dark:hover:text-space-accent">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8c0 1.107-.453 1.94-1 2.585V11a1 1 0 11-2 0v-1.5a1 1 0 011-1c.463 0 .75-.252.75-.5 0-.276-.224-.5-.5-.5zM10 15a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <!-- Tooltip container -->
+                                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-gray-950 dark:bg-space-card text-white text-xs rounded-xl p-3.5 shadow-2xl border border-white/10 opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-50 leading-relaxed font-normal">
+                                        <strong class="text-indigo-300 dark:text-space-accent block mb-1">오류 복원력 단계</strong>
+                                        QR 코드의 오염/훼손 시 데이터 자가 복원 능력을 나타냅니다. 높을수록 안정적이나 패턴이 복잡해집니다.<br>
+                                        <span class="block mt-2">&bull; <strong>L (약 7%):</strong> 데이터 패턴이 단순해 빠른 인식이 강점.</span>
+                                        <span class="block mt-1">&bull; <strong>M (약 15%):</strong> 표준 설정. 일반적인 다목적용.</span>
+                                        <span class="block mt-1">&bull; <strong>Q (약 25%):</strong> 중간 훼손 대비. 로고 삽입 시 적합.</span>
+                                        <span class="block mt-1">&bull; <strong>H (약 30%):</strong> 최고 복원력. 야외 인쇄 및 훼손 노출용.</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <select id="qr-ecc" class="w-full px-3 py-2 text-sm bg-white dark:bg-space-deep border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-space-accent focus:border-indigo-500 dark:focus:border-space-accent outline-none">
+                                <option value="L">L (Low - 약 7% 복원)</option>
+                                <option value="M" selected>M (Medium - 약 15% 복원)</option>
+                                <option value="Q">Q (Quartile - 약 25% 복원)</option>
+                                <option value="H">H (High - 약 30% 복원)</option>
+                            </select>
+                        </div>
+
+                        <!-- Resolution (Size) -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label for="qr-size" class="text-sm font-medium text-gray-700 dark:text-gray-300">다운로드 해상도</label>
+                                <span id="qr-size-text" class="text-xs font-mono text-indigo-600 dark:text-space-accent font-bold">300 x 300 px</span>
+                            </div>
+                            <div class="flex items-center space-x-3 h-9">
+                                <input type="range" id="qr-size" min="200" max="1000" step="50" value="300" class="w-full accent-indigo-500 dark:accent-space-accent h-1.5 bg-gray-200 dark:bg-space-deep rounded-lg appearance-none cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Download Card -->
+                <div class="bg-white/60 dark:bg-space-card/50 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-2xl p-6 shadow-xl shadow-black/5">
+                    <h2 class="text-lg font-bold mb-4 flex items-center space-x-2">
+                        <span class="w-1.5 h-5 bg-indigo-500 dark:bg-space-accent rounded-full"></span>
+                        <span>3. 파일 내보내기</span>
+                    </h2>
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-3 sm:space-y-0">
+                        <div class="flex-grow">
+                            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">포맷 선택</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button type="button" id="btn-format-png" data-format="png" class="px-4 py-2.5 text-sm font-semibold rounded-xl border border-indigo-500/20 bg-indigo-500/10 text-indigo-600 dark:text-space-accent dark:bg-space-accent/10 dark:border-space-accent/20 transition-all">
+                                    PNG 파일
+                                </button>
+                                <button type="button" id="btn-format-svg" data-format="svg" class="px-4 py-2.5 text-sm font-semibold rounded-xl border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-space-deep/50 transition-all">
+                                    SVG 파일
+                                </button>
+                            </div>
+                        </div>
+                        <div class="sm:pt-5">
+                            <button id="btn-download" class="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 dark:from-space-accent dark:to-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 dark:shadow-space-accent/10 hover:opacity-90 active:scale-95 transition-all text-sm flex items-center justify-center space-x-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+                                </svg>
+                                <span>다운로드 받기</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column: Preview (5 cols) -->
+            <div class="md:col-span-5">
+                <div class="bg-white/60 dark:bg-space-card/50 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-2xl p-8 shadow-xl shadow-black/5 flex flex-col items-center justify-center sticky top-24">
+                    <div id="canvas-container" class="bg-white p-6 rounded-2xl shadow-inner border border-gray-100/50 flex items-center justify-center transition-all duration-300 min-h-[220px] min-w-[220px]">
+                        <!-- QR Code Canvas가 동적으로 주입됩니다 -->
+                    </div>
+                    
+                    <div class="mt-6 text-center space-y-2">
+                        <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">실시간 프리뷰</p>
+                        <div class="flex items-center justify-center space-x-3 text-xs text-gray-500 dark:text-gray-400 font-mono">
+                            <span id="preview-resolution">300 x 300 px</span>
+                            <span>&bull;</span>
+                            <span id="preview-ecc">복원력: M (15%)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-200 dark:border-white/10 py-8 mt-12 bg-white/30 dark:bg-space-card/20 backdrop-blur-sm">
+        <div class="max-w-6xl mx-auto px-4 text-center text-sm text-gray-500 dark:text-gray-400">
+            &copy; 2026 WebTools. 100% Client-Side &amp; Privacy-First.
+        </div>
+    </footer>
+
+    <!-- Interactive Logic Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const qrDataInput = document.getElementById('qr-data');
+            const qrCharCounter = document.getElementById('qr-char-counter');
+            const colorFgInput = document.getElementById('qr-color-fg');
+            const colorFgTextInput = document.getElementById('qr-color-fg-text');
+            const colorBgInput = document.getElementById('qr-color-bg');
+            const colorBgTextInput = document.getElementById('qr-color-bg-text');
+            const qrEccSelect = document.getElementById('qr-ecc');
+            const qrSizeSlider = document.getElementById('qr-size');
+            const qrSizeText = document.getElementById('qr-size-text');
+            const previewResolution = document.getElementById('preview-resolution');
+            const previewEcc = document.getElementById('preview-ecc');
+            
+            const btnFormatPng = document.getElementById('btn-format-png');
+            const btnFormatSvg = document.getElementById('btn-format-svg');
+            const btnDownload = document.getElementById('btn-download');
+            
+            const canvasContainer = document.getElementById('canvas-container');
+
+            let downloadFormat = 'png'; // default format
+
+            // 1. Initialize QRCodeStyling
+            // Wait for library to be loaded (in case defer delays it slightly)
+            const initQR = () => {
+                if (typeof QRCodeStyling === 'undefined') {
+                    setTimeout(initQR, 50);
+                    return;
+                }
+
+                const qrCode = new QRCodeStyling({
+                    width: parseInt(qrSizeSlider.value),
+                    height: parseInt(qrSizeSlider.value),
+                    data: " ",
+                    dotsOptions: {
+                        color: colorFgInput.value,
+                        type: "square"
+                    },
+                    backgroundOptions: {
+                        color: colorBgInput.value,
+                    },
+                    qrOptions: {
+                        errorCorrectionLevel: qrEccSelect.value
+                    }
+                });
+
+                // Update handler
+                const updateQR = () => {
+                    const data = qrDataInput.value.trim();
+                    const size = parseInt(qrSizeSlider.value);
+                    const colorFg = colorFgInput.value;
+                    const colorBg = colorBgInput.value;
+                    const ecc = qrEccSelect.value;
+
+                    // Update UI text indicators
+                    qrSizeText.textContent = `${size} x ${size} px`;
+                    previewResolution.textContent = `${size} x ${size} px`;
+                    previewEcc.textContent = `복원력: ${ecc} (${getEccPercent(ecc)})`;
+
+                    // Update character counter
+                    const charCount = qrDataInput.value.length;
+                    qrCharCounter.textContent = `${charCount} / 1200 자`;
+                    if (charCount >= 1200) {
+                        qrCharCounter.classList.add('text-amber-500', 'font-semibold');
+                        qrCharCounter.classList.remove('text-gray-400', 'dark:text-gray-500');
+                    } else {
+                        qrCharCounter.classList.remove('text-amber-500', 'font-semibold');
+                        qrCharCounter.classList.add('text-gray-400', 'dark:text-gray-500');
+                    }
+
+                    if (!data) {
+                        // Show placeholder waiting message
+                        canvasContainer.innerHTML = `
+                            <div class="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 py-8 text-center max-w-[240px]">
+                                <svg class="w-12 h-12 mb-3 animate-pulse" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5zM17 17v1.5M14 14h3v3M14 17h.01M17 20h.01M20 20h-3M20 17v-3M20 14h-3"/>
+                                </svg>
+                                <span class="text-xs font-semibold">데이터 입력을 기다리는 중...</span>
+                            </div>
+                        `;
+                        btnDownload.disabled = true;
+                        btnDownload.classList.add('opacity-50', 'cursor-not-allowed');
+                        return;
+                    }
+
+                    btnDownload.disabled = false;
+                    btnDownload.classList.remove('opacity-50', 'cursor-not-allowed');
+
+                    try {
+                        canvasContainer.innerHTML = '';
+                        qrCode.append(canvasContainer);
+
+                        qrCode.update({
+                            width: size,
+                            height: size,
+                            data: data,
+                            dotsOptions: {
+                                color: colorFg
+                            },
+                            backgroundOptions: {
+                                color: colorBg
+                            },
+                            qrOptions: {
+                                errorCorrectionLevel: ecc
+                            }
+                        });
+                    } catch (error) {
+                        console.error("QR Code Error:", error);
+                        // Show overflow warning
+                        canvasContainer.innerHTML = `
+                            <div class="flex flex-col items-center justify-center text-rose-500 dark:text-rose-400 py-8 px-4 text-center max-w-[240px]">
+                                <svg class="w-12 h-12 mb-3 animate-bounce" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                                <span class="text-sm font-bold mb-1">용량 초과</span>
+                                <span class="text-xs text-gray-500 dark:text-gray-400 leading-normal">입력 데이터가 너무 깁니다. 글자 수를 줄이거나 오류 복원력(ECC) 단계를 낮춰주세요.</span>
+                            </div>
+                        `;
+                        btnDownload.disabled = true;
+                        btnDownload.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+                };
+
+                // Run immediately to set initial blank state
+                updateQR();
+
+                // Sync text input with color picker
+                const syncColor = (picker, textInput, isFg) => {
+                    picker.addEventListener('input', (e) => {
+                        textInput.value = e.target.value;
+                        updateQR();
+                    });
+
+                    textInput.addEventListener('input', (e) => {
+                        const val = e.target.value;
+                        // Hex regex check
+                        if (/^#[0-9A-F]{6}$/i.test(val)) {
+                            picker.value = val;
+                            updateQR();
+                        }
+                    });
+                };
+
+                syncColor(colorFgInput, colorFgTextInput, true);
+                syncColor(colorBgInput, colorBgTextInput, false);
+
+                // Attach event listeners for updates with input debouncing for smooth performance
+                let debounceTimeout;
+                qrDataInput.addEventListener('input', () => {
+                    const charCount = qrDataInput.value.length;
+                    qrCharCounter.textContent = `${charCount} / 1200 자`;
+                    if (charCount >= 1200) {
+                        qrCharCounter.classList.add('text-amber-500', 'font-semibold');
+                        qrCharCounter.classList.remove('text-gray-400', 'dark:text-gray-500');
+                    } else {
+                        qrCharCounter.classList.remove('text-amber-500', 'font-semibold');
+                        qrCharCounter.classList.add('text-gray-400', 'dark:text-gray-500');
+                    }
+
+                    clearTimeout(debounceTimeout);
+                    debounceTimeout = setTimeout(updateQR, 150);
+                });
+
+                qrEccSelect.addEventListener('change', updateQR);
+                qrSizeSlider.addEventListener('input', updateQR);
+
+                // Format selection buttons
+                const selectFormat = (format) => {
+                    downloadFormat = format;
+                    if (format === 'png') {
+                        btnFormatPng.className = "px-4 py-2.5 text-sm font-semibold rounded-xl border border-indigo-500/20 bg-indigo-500/10 text-indigo-600 dark:text-space-accent dark:bg-space-accent/10 dark:border-space-accent/20 transition-all";
+                        btnFormatSvg.className = "px-4 py-2.5 text-sm font-semibold rounded-xl border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-space-deep/50 transition-all";
+                    } else {
+                        btnFormatSvg.className = "px-4 py-2.5 text-sm font-semibold rounded-xl border border-indigo-500/20 bg-indigo-500/10 text-indigo-600 dark:text-space-accent dark:bg-space-accent/10 dark:border-space-accent/20 transition-all";
+                        btnFormatPng.className = "px-4 py-2.5 text-sm font-semibold rounded-xl border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-space-deep/50 transition-all";
+                    }
+                };
+
+                btnFormatPng.addEventListener('click', () => selectFormat('png'));
+                btnFormatSvg.addEventListener('click', () => selectFormat('svg'));
+
+                // Download execution
+                btnDownload.addEventListener('click', () => {
+                    const now = new Date();
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const date = String(now.getDate()).padStart(2, '0');
+                    const hours = String(now.getHours()).padStart(2, '0');
+                    const minutes = String(now.getMinutes()).padStart(2, '0');
+                    const seconds = String(now.getSeconds()).padStart(2, '0');
+                    const timestamp = `${year}${month}${date}${hours}${minutes}${seconds}`;
+
+                    qrCode.download({
+                        name: `QR_${timestamp}`,
+                        extension: downloadFormat
+                    });
+                });
+            };
+
+            const getEccPercent = (ecc) => {
+                switch(ecc) {
+                    case 'L': return '7%';
+                    case 'M': return '15%';
+                    case 'Q': return '25%';
+                    case 'H': return '30%';
+                    default: return '';
+                }
+            };
+
+            // Start init
+            initQR();
+        });
+    </script>
+</body>
+</html>

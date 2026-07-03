@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="ko" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>비밀번호 생성기 | WebTools</title>
+    <meta name="description" content="암호학적으로 안전한 비밀번호 및 패스프라이즈를 무작위로 생성하는 로컬 웹 도구">
+    <link rel="stylesheet" href="../css/tailwind.css">
+    <script src="../js/theme.js" defer></script>
+</head>
+<body class="bg-google-gray dark:bg-space-deep text-google-text dark:text-gray-100 transition-colors duration-300 min-h-screen flex flex-col font-sans">
+    <!-- Header -->
+    <header class="border-b border-gray-200 dark:border-white/10 bg-white/60 dark:bg-space-card/50 backdrop-blur-xl sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-6">
+                <!-- Home Button -->
+                <a href="../index.html" class="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-space-accent transition-colors font-semibold text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+                    </svg>
+                    <span>Home</span>
+                </a>
+                <span class="text-gray-300 dark:text-white/10 text-lg">|</span>
+                <span class="text-lg font-bold tracking-tight">비밀번호 생성기</span>
+            </div>
+            
+            <!-- 3-Way Theme Switcher -->
+            <div class="inline-flex rounded-xl p-1 bg-gray-100 dark:bg-space-deep border border-gray-200 dark:border-white/5" id="theme-switcher">
+                <button data-theme="light" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center space-x-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+                    <span>Light</span>
+                </button>
+                <button data-theme="auto" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center space-x-1.5">
+                    <span>Auto</span>
+                </button>
+                <button data-theme="dark" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center space-x-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                    <span>Dark</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-12">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12">
+            
+            <!-- Left Column: Settings (7 cols) -->
+            <div class="md:col-span-7 space-y-6">
+                <!-- Mode Selection -->
+                <div class="bg-white/60 dark:bg-space-card/50 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-2xl p-6 shadow-xl shadow-black/5">
+                    <h2 class="text-lg font-bold mb-4 flex items-center space-x-2">
+                        <span class="w-1.5 h-5 bg-indigo-500 dark:bg-space-accent rounded-full"></span>
+                        <span>1. 생성 방식 선택</span>
+                    </h2>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" id="btn-mode-pwd" class="px-4 py-3 font-semibold rounded-xl border border-indigo-500/20 bg-indigo-500/10 text-indigo-600 dark:text-space-accent dark:bg-space-accent/10 dark:border-space-accent/20 transition-all text-sm flex items-center justify-center space-x-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
+                            </svg>
+                            <span>일반 비밀번호</span>
+                        </button>
+                        <button type="button" id="btn-mode-phr" class="px-4 py-3 font-semibold rounded-xl border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-space-deep/50 transition-all text-sm flex items-center justify-center space-x-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-16.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-16.25v16.25"/>
+                            </svg>
+                            <span>패스프라이즈 (단어 조합)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Password Configuration Options (Visible by default) -->
+                <div id="pwd-options-card" class="bg-white/60 dark:bg-space-card/50 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-2xl p-6 shadow-xl shadow-black/5 space-y-6">
+                    <h2 class="text-lg font-bold flex items-center space-x-2">
+                        <span class="w-1.5 h-5 bg-indigo-500 dark:bg-space-accent rounded-full"></span>
+                        <span>2. 비밀번호 옵션 설정</span>
+                    </h2>
+
+                    <!-- Length Slider -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label for="pwd-len-slider" class="text-sm font-medium text-gray-700 dark:text-gray-300">비밀번호 길이</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" id="pwd-len-input" value="20" min="6" max="64" class="w-16 px-2 py-1 text-center text-sm font-mono bg-white dark:bg-space-deep border border-gray-200 dark:border-white/10 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-space-accent">
+                                <span class="text-xs text-gray-400 dark:text-gray-500">자</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3 h-9">
+                            <input type="range" id="pwd-len-slider" min="6" max="64" value="20" class="w-full accent-indigo-500 dark:accent-space-accent h-1.5 bg-gray-200 dark:bg-space-deep rounded-lg appearance-none cursor-pointer">
+                        </div>
+                    </div>
+
+                    <hr class="border-gray-200 dark:border-white/5">
+
+                    <!-- Character Composition (Checkboxes) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">문자 구성 선택</label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <label class="flex items-center space-x-3 cursor-pointer text-sm text-gray-600 dark:text-gray-300">
+                                <input type="checkbox" id="chk-upper" checked class="w-4.5 h-4.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:bg-space-deep dark:border-white/10 dark:checked:bg-space-accent dark:checked:border-space-accent">
+                                <span>영어 대문자 (A-Z)</span>
+                            </label>
+                            <label class="flex items-center space-x-3 cursor-pointer text-sm text-gray-600 dark:text-gray-300">
+                                <input type="checkbox" id="chk-lower" checked class="w-4.5 h-4.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:bg-space-deep dark:border-white/10 dark:checked:bg-space-accent dark:checked:border-space-accent">
+                                <span>영어 소문자 (a-z)</span>
+                            </label>
+                            <label class="flex items-center space-x-3 cursor-pointer text-sm text-gray-600 dark:text-gray-300">
+                                <input type="checkbox" id="chk-num" checked class="w-4.5 h-4.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:bg-space-deep dark:border-white/10 dark:checked:bg-space-accent dark:checked:border-space-accent">
+                                <span>숫자 (0-9)</span>
+                            </label>
+                            <label class="flex items-center space-x-3 cursor-pointer text-sm text-gray-600 dark:text-gray-300">
+                                <input type="checkbox" id="chk-spec" checked class="w-4.5 h-4.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:bg-space-deep dark:border-white/10 dark:checked:bg-space-accent dark:checked:border-space-accent">
+                                <span>특수문자 (!@#$%^&*)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <hr class="border-gray-200 dark:border-white/5">
+
+                    <!-- Minimum Guarantees & Ambiguity -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <!-- Guaranteed Minimum Numbers -->
+                        <div>
+                            <label for="pwd-min-num" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">숫자 최소 문자 개수</label>
+                            <input type="number" id="pwd-min-num" value="1" min="0" max="10" class="w-full px-3 py-2 text-sm bg-white dark:bg-space-deep border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-space-accent focus:border-indigo-500 dark:focus:border-space-accent outline-none">
+                        </div>
+                        <!-- Guaranteed Minimum Specials -->
+                        <div>
+                            <label for="pwd-min-spec" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">특수문자 최소 개수</label>
+                            <input type="number" id="pwd-min-spec" value="1" min="0" max="10" class="w-full px-3 py-2 text-sm bg-white dark:bg-space-deep border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-space-accent focus:border-indigo-500 dark:focus:border-space-accent outline-none">
+                        </div>
+                    </div>
+
+                    <hr class="border-gray-200 dark:border-white/5">
+
+                    <!-- Ambiguous Exclude Option -->
+                    <div>
+                        <label class="flex items-start space-x-3 cursor-pointer text-sm text-gray-600 dark:text-gray-300">
+                            <input type="checkbox" id="chk-exclude-ambig" class="mt-0.5 w-4.5 h-4.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:bg-space-deep dark:border-white/10 dark:checked:bg-space-accent dark:checked:border-space-accent">
+                            <div class="flex flex-col">
+                                <span class="font-semibold">모호한 문자 제외 (Ambiguous Characters)</span>
+                                <span class="text-xs text-gray-400 dark:text-gray-500 mt-1">혼동하기 쉬운 유사 문자 <code>I, l, 1, O, o, 0</code> 등을 생성에서 완벽히 배제합니다.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Passphrase Configuration Options (Hidden by default) -->
+                <div id="phr-options-card" class="hidden bg-white/60 dark:bg-space-card/50 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-2xl p-6 shadow-xl shadow-black/5 space-y-6">
+                    <h2 class="text-lg font-bold flex items-center space-x-2">
+                        <span class="w-1.5 h-5 bg-indigo-500 dark:bg-space-accent rounded-full"></span>
+                        <span>2. 패스프라이즈 옵션 설정</span>
+                    </h2>
+
+                    <!-- Word Count -->
+                    <div>
+                        <label for="phr-words" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">단어 수 설정</label>
+                        <input type="number" id="phr-words" value="4" min="3" max="15" class="w-full px-3 py-2 text-sm bg-white dark:bg-space-deep border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-space-accent focus:border-indigo-500 dark:focus:border-space-accent outline-none">
+                    </div>
+
+                    <hr class="border-gray-200 dark:border-white/5">
+
+                    <!-- Separator -->
+                    <div>
+                        <label for="phr-separator" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">구분 기호(Separator) 설정</label>
+                        <input type="text" id="phr-separator" value="-" class="w-full px-3 py-2 text-sm bg-white dark:bg-space-deep border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-space-accent focus:border-indigo-500 dark:focus:border-space-accent outline-none font-mono">
+                    </div>
+
+                    <hr class="border-gray-200 dark:border-white/5">
+
+                    <!-- Checkboxes -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <label class="flex items-center space-x-3 cursor-pointer text-sm text-gray-600 dark:text-gray-300">
+                            <input type="checkbox" id="chk-capitalize" class="w-4.5 h-4.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:bg-space-deep dark:border-white/10 dark:checked:bg-space-accent dark:checked:border-space-accent">
+                            <span>첫 글자 대문자화 (Capitalize)</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer text-sm text-gray-600 dark:text-gray-300">
+                            <input type="checkbox" id="chk-add-number" class="w-4.5 h-4.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:bg-space-deep dark:border-white/10 dark:checked:bg-space-accent dark:checked:border-space-accent">
+                            <span>무작위 숫자 포함</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column: Result Card (5 cols) -->
+            <div class="md:col-span-5">
+                <div class="bg-white/60 dark:bg-space-card/50 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-2xl p-8 shadow-xl shadow-black/5 flex flex-col items-stretch justify-center sticky top-24 min-h-[300px]">
+                    
+                    <!-- Result Box -->
+                    <div class="space-y-4">
+                        <span class="text-xs text-gray-400 dark:text-gray-500 font-semibold tracking-wide uppercase block text-center">생성된 비밀번호</span>
+                        
+                        <div class="relative group cursor-pointer">
+                            <div id="output-box" class="w-full text-center text-xl sm:text-2xl font-bold font-mono py-8 px-4 bg-gray-50 dark:bg-space-deep border border-gray-200 dark:border-white/5 rounded-2xl transition-all group-hover:border-indigo-500/40 dark:group-hover:border-space-accent/40 select-all overflow-x-auto break-all min-h-[100px] flex items-center justify-center">
+                                -
+                            </div>
+                            <!-- Overlay Tooltip -->
+                            <div class="absolute inset-0 flex items-center justify-center bg-gray-950/80 text-white text-xs font-semibold rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-150 backdrop-blur-xs">
+                                <span id="copy-tooltip">클릭하여 클립보드에 복사</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Strength Meter -->
+                    <div id="strength-panel" class="mt-6 space-y-2">
+                        <div class="flex items-center justify-between text-xs font-semibold text-gray-500 dark:text-gray-400">
+                            <span>보안 강도</span>
+                            <span id="strength-badge" class="px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-500 font-bold uppercase text-[10px]">매우 약함</span>
+                        </div>
+                        <div class="w-full h-2 bg-gray-100 dark:bg-space-deep rounded-full overflow-hidden">
+                            <div id="strength-bar" class="h-full bg-rose-500 w-1/12 transition-all duration-300"></div>
+                        </div>
+                        <div id="entropy-label" class="text-[10px] text-gray-400 dark:text-gray-500 text-right font-mono mt-1">엔트로피: 0 bits</div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="mt-8 grid grid-cols-5 gap-3">
+                        <button id="btn-copy" class="col-span-4 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 dark:from-space-accent dark:to-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 dark:shadow-space-accent/10 hover:opacity-90 active:scale-95 transition-all text-sm flex items-center justify-center space-x-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
+                            </svg>
+                            <span>복사하기</span>
+                        </button>
+                        <button id="btn-refresh" class="col-span-1 py-3 bg-gray-100 dark:bg-space-deep text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl active:scale-95 transition-all flex items-center justify-center" title="재생성">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-200 dark:border-white/10 py-8 mt-12 bg-white/30 dark:bg-space-card/20 backdrop-blur-sm">
+        <div class="max-w-6xl mx-auto px-4 text-center text-sm text-gray-500 dark:text-gray-400">
+            &copy; 2026 WebTools. 100% Client-Side &amp; Privacy-First.
+        </div>
+    </footer>
+
+    <!-- JS Logic -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM selection
+            const btnModePwd = document.getElementById('btn-mode-pwd');
+            const btnModePhr = document.getElementById('btn-mode-phr');
+            
+            const pwdOptionsCard = document.getElementById('pwd-options-card');
+            const phrOptionsCard = document.getElementById('phr-options-card');
+
+            // Pwd options
+            const pwdLenSlider = document.getElementById('pwd-len-slider');
+            const pwdLenInput = document.getElementById('pwd-len-input');
+            const chkUpper = document.getElementById('chk-upper');
+            const chkLower = document.getElementById('chk-lower');
+            const chkNum = document.getElementById('chk-num');
+            const chkSpec = document.getElementById('chk-spec');
+            const pwdMinNum = document.getElementById('pwd-min-num');
+            const pwdMinSpec = document.getElementById('pwd-min-spec');
+            const chkExcludeAmbig = document.getElementById('chk-exclude-ambig');
+
+            // Phr options
+            const phrWords = document.getElementById('phr-words');
+            const phrSeparator = document.getElementById('phr-separator');
+            const chkCapitalize = document.getElementById('chk-capitalize');
+            const chkAddNumber = document.getElementById('chk-add-number');
+
+            // Output
+            const outputBox = document.getElementById('output-box');
+            const copyTooltip = document.getElementById('copy-tooltip');
+            const btnCopy = document.getElementById('btn-copy');
+            const btnRefresh = document.getElementById('btn-refresh');
+
+            // Strength
+            const strengthBadge = document.getElementById('strength-badge');
+            const strengthBar = document.getElementById('strength-bar');
+            const entropyLabel = document.getElementById('entropy-label');
+
+            // Internal state
+            let currentMode = 'password'; // 'password' or 'passphrase'
+
+            // Hardcoded 100 simple, safe English words for Passphrase
+            const wordlist = [
+                "apple", "banana", "cherry", "dragon", "elephant", "forest", "guitar", "harbor", "island", "jungle",
+                "kitten", "lemon", "mountain", "needle", "ocean", "pillow", "queen", "river", "shadow", "tiger",
+                "umbrella", "valley", "window", "yellow", "zebra", "airport", "balloon", "castle", "desert", "emerald",
+                "feather", "garden", "helmet", "infinite", "journey", "keyhole", "lantern", "meadow", "nomad", "oasis",
+                "planet", "quiver", "rainbow", "sapphire", "tunnel", "universe", "volcano", "waterfall", "xenon", "yacht",
+                "beacon", "canyon", "dolphin", "echo", "frost", "glacier", "horizon", "iceberg", "jupiter", "lagoon",
+                "mist", "nebula", "orchid", "pebble", "quartz", "ripple", "summit", "tundra", "vortex", "whisper",
+                "aurora", "breeze", "crystal", "dusk", "ember", "flame", "galaxy", "haven", "iris", "jade",
+                "kindle", "lunar", "marble", "nova", "opal", "pulse", "reef", "spire", "tide", "amber",
+                "bronze", "copper", "silver", "gold", "platinum", "diamond", "ruby", "topaz", "garnet", "pearl"
+            ];
+
+            // 1. Password length inputs syncer
+            pwdLenSlider.addEventListener('input', (e) => {
+                pwdLenInput.value = e.target.value;
+                generate();
+            });
+
+            pwdLenInput.addEventListener('input', (e) => {
+                let val = parseInt(e.target.value) || 20;
+                if (val < 6) val = 6;
+                if (val > 64) val = 64;
+                pwdLenSlider.value = val;
+                generate();
+            });
+
+            pwdLenInput.addEventListener('blur', (e) => {
+                let val = parseInt(e.target.value) || 20;
+                if (val < 6) val = 6;
+                if (val > 64) val = 64;
+                e.target.value = val;
+                pwdLenSlider.value = val;
+                generate();
+            });
+
+            // 2. Mode Swapping
+            const setMode = (mode) => {
+                currentMode = mode;
+                const activeTab = "px-4 py-3 font-semibold rounded-xl border border-indigo-500/20 bg-indigo-500/10 text-indigo-600 dark:text-space-accent dark:bg-space-accent/10 dark:border-space-accent/20 transition-all text-sm flex items-center justify-center space-x-2";
+                const inactiveTab = "px-4 py-3 font-semibold rounded-xl border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-space-deep/50 transition-all text-sm flex items-center justify-center space-x-2";
+
+                if (mode === 'password') {
+                    btnModePwd.className = activeTab;
+                    btnModePhr.className = inactiveTab;
+                    pwdOptionsCard.classList.remove('hidden');
+                    phrOptionsCard.classList.add('hidden');
+                } else {
+                    btnModePwd.className = inactiveTab;
+                    btnModePhr.className = activeTab;
+                    pwdOptionsCard.classList.add('hidden');
+                    phrOptionsCard.classList.remove('hidden');
+                }
+                generate();
+            };
+
+            btnModePwd.addEventListener('click', () => setMode('password'));
+            btnModePhr.addEventListener('click', () => setMode('passphrase'));
+
+            // 3. Cryptographically Secure Random Int
+            const getSecureRandomInt = (max) => {
+                const arr = new Uint32Array(1);
+                window.crypto.getRandomValues(arr);
+                return arr[0] % max;
+            };
+
+            // 4. Secure Password Generation
+            const generatePassword = () => {
+                const length = parseInt(pwdLenInput.value) || 20;
+                const useUpper = chkUpper.checked;
+                const useLower = chkLower.checked;
+                const useNum = chkNum.checked;
+                const useSpec = chkSpec.checked;
+                const minNum = parseInt(pwdMinNum.value) || 0;
+                const minSpec = parseInt(pwdMinSpec.value) || 0;
+                const excludeAmbig = chkExcludeAmbig.checked;
+
+                // Validate at least one pool is selected
+                if (!useUpper && !useLower && !useNum && !useSpec) {
+                    showErrorState("문자 구성을 최소 하나 이상 체크해 주세요.");
+                    return;
+                }
+
+                // Validate minimum constraints fits within total length
+                const forcedCount = (useNum ? minNum : 0) + (useSpec ? minSpec : 0);
+                if (forcedCount > length) {
+                    showErrorState("숫자 및 특수문자 최소 보장 개수의 합이 비밀번호 길이보다 큽니다.");
+                    return;
+                }
+
+                // Construct pools
+                let upperPool = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                let lowerPool = "abcdefghijklmnopqrstuvwxyz";
+                let numPool = "0123456789";
+                let specPool = "!@#$%^&*";
+
+                // Ambiguous filter list
+                if (excludeAmbig) {
+                    const filter = (str) => str.replace(/[Il1Oo0]/g, '');
+                    upperPool = filter(upperPool);
+                    lowerPool = filter(lowerPool);
+                    numPool = filter(numPool);
+                    specPool = filter(specPool);
+                }
+
+                // Verify pool is not empty after filter (e.g. if numbers checked but filtered, though digits don't contain other ambiguous, but it's safe)
+                const activePools = [];
+                let combinedPool = "";
+
+                if (useUpper && upperPool.length > 0) { activePools.push(upperPool); combinedPool += upperPool; }
+                if (useLower && lowerPool.length > 0) { activePools.push(lowerPool); combinedPool += lowerPool; }
+                if (useNum && numPool.length > 0) { activePools.push(numPool); combinedPool += numPool; }
+                if (useSpec && specPool.length > 0) { activePools.push(specPool); combinedPool += specPool; }
+
+                if (combinedPool.length === 0) {
+                    showErrorState("필터링 적용 후 사용할 수 있는 문자 세트가 비어 있습니다.");
+                    return;
+                }
+
+                let passwordChars = [];
+
+                // 1. Force guaranteed digits
+                if (useNum && minNum > 0 && numPool.length > 0) {
+                    for (let i = 0; i < minNum; i++) {
+                        passwordChars.push(numPool.charAt(getSecureRandomInt(numPool.length)));
+                    }
+                }
+
+                // 2. Force guaranteed special characters
+                if (useSpec && minSpec > 0 && specPool.length > 0) {
+                    for (let i = 0; i < minSpec; i++) {
+                        passwordChars.push(specPool.charAt(getSecureRandomInt(specPool.length)));
+                    }
+                }
+
+                // 3. Fill the rest of the password length
+                const remaining = length - passwordChars.length;
+                for (let i = 0; i < remaining; i++) {
+                    passwordChars.push(combinedPool.charAt(getSecureRandomInt(combinedPool.length)));
+                }
+
+                // 4. Secure Shuffle
+                const finalPassword = secureShuffle(passwordChars);
+                displayResult(finalPassword);
+
+                // 5. Entropy calculation
+                const entropy = length * Math.log2(combinedPool.length);
+                updateStrengthMeter(entropy, 'password');
+            };
+
+            const secureShuffle = (arr) => {
+                const len = arr.length;
+                const randomArr = new Uint32Array(len);
+                window.crypto.getRandomValues(randomArr);
+                const copy = [...arr];
+                for (let i = len - 1; i > 0; i--) {
+                    const j = randomArr[i] % (i + 1);
+                    const temp = copy[i];
+                    copy[i] = copy[j];
+                    copy[j] = temp;
+                }
+                return copy.join('');
+            };
+
+            // 5. Passphrase Generation
+            const generatePassphrase = () => {
+                let wordCount = parseInt(phrWords.value) || 4;
+                if (wordCount < 3) wordCount = 3;
+                if (wordCount > 15) wordCount = 15;
+                phrWords.value = wordCount;
+
+                const separator = phrSeparator.value;
+                const capitalize = chkCapitalize.checked;
+                const addNum = chkAddNumber.checked;
+
+                const selected = [];
+                const randomIndices = new Uint32Array(wordCount);
+                window.crypto.getRandomValues(randomIndices);
+
+                for (let i = 0; i < wordCount; i++) {
+                    const idx = randomIndices[i] % wordlist.length;
+                    let word = wordlist[idx];
+                    if (capitalize) {
+                        word = word.charAt(0).toUpperCase() + word.slice(1);
+                    }
+                    selected.push(word);
+                }
+
+                if (addNum) {
+                    const randomDigits = new Uint32Array(1);
+                    window.crypto.getRandomValues(randomDigits);
+                    const num = randomDigits[0] % 100; // 0 ~ 99
+                    selected.push(String(num));
+                }
+
+                const passphrase = selected.join(separator);
+                displayResult(passphrase);
+
+                // Entropy = count * log2(100) + (addNum ? log2(100) : 0)
+                let entropy = wordCount * Math.log2(wordlist.length);
+                if (addNum) {
+                    entropy += Math.log2(100);
+                }
+                updateStrengthMeter(entropy, 'passphrase');
+            };
+
+            // Unified trigger
+            const generate = () => {
+                if (currentMode === 'password') {
+                    generatePassword();
+                } else {
+                    generatePassphrase();
+                }
+            };
+
+            // Result Display Helpers
+            const displayResult = (val) => {
+                outputBox.textContent = val;
+                outputBox.classList.remove('text-rose-500', 'text-sm');
+                outputBox.classList.add('text-xl', 'sm:text-2xl', 'font-bold');
+                btnCopy.disabled = false;
+                btnCopy.classList.remove('opacity-50', 'cursor-not-allowed');
+            };
+
+            const showErrorState = (msg) => {
+                outputBox.textContent = msg;
+                outputBox.classList.add('text-rose-500', 'text-sm');
+                outputBox.classList.remove('text-xl', 'sm:text-2xl', 'font-bold');
+                btnCopy.disabled = true;
+                btnCopy.classList.add('opacity-50', 'cursor-not-allowed');
+                
+                // Clear strength bar
+                strengthBadge.textContent = "오류";
+                strengthBadge.className = "px-2 py-0.5 rounded-full bg-gray-500/10 text-gray-500 font-bold uppercase text-[10px]";
+                strengthBar.style.width = '0%';
+                strengthBar.className = "h-full bg-gray-400 w-0";
+                entropyLabel.textContent = "엔트로피: 0 bits";
+            };
+
+            // Entropy strength evaluator
+            const updateStrengthMeter = (entropy, mode) => {
+                entropyLabel.textContent = `엔트로피: ${Math.round(entropy)} bits`;
+                let level = 'weak';
+
+                // Adjusted threshold for Password vs Passphrase
+                const threshold = mode === 'password' ? [45, 75] : [35, 60];
+
+                if (entropy < threshold[0]) {
+                    level = 'weak';
+                } else if (entropy < threshold[1]) {
+                    level = 'medium';
+                } else {
+                    level = 'strong';
+                }
+
+                if (level === 'weak') {
+                    strengthBadge.textContent = "약함";
+                    strengthBadge.className = "px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-500 font-bold text-[10px]";
+                    strengthBar.style.width = '25%';
+                    strengthBar.className = "h-full bg-rose-500 transition-all duration-300";
+                } else if (level === 'medium') {
+                    strengthBadge.textContent = "보통";
+                    strengthBadge.className = "px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 font-bold text-[10px]";
+                    strengthBar.style.width = '60%';
+                    strengthBar.className = "h-full bg-amber-500 transition-all duration-300";
+                } else {
+                    strengthBadge.textContent = "강함";
+                    strengthBadge.className = "px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 font-bold text-[10px]";
+                    strengthBar.style.width = '100%';
+                    strengthBar.className = "h-full bg-emerald-500 transition-all duration-300";
+                }
+            };
+
+            // Copy Action
+            const copyToClipboard = () => {
+                const text = outputBox.textContent;
+                if (!text || outputBox.classList.contains('text-rose-500')) return;
+
+                navigator.clipboard.writeText(text).then(() => {
+                    copyTooltip.textContent = "복사 완료! 👍";
+                    setTimeout(() => {
+                        copyTooltip.textContent = "클릭하여 클립보드에 복사";
+                    }, 1500);
+                }).catch(err => {
+                    console.error("복사 실패", err);
+                });
+            };
+
+            // Click on copy box or copy button
+            document.querySelector('.group.cursor-pointer').addEventListener('click', copyToClipboard);
+            btnCopy.addEventListener('click', copyToClipboard);
+            btnRefresh.addEventListener('click', generate);
+
+            // Bind check changes to recalculate immediately
+            const inputs = [
+                chkUpper, chkLower, chkNum, chkSpec,
+                pwdMinNum, pwdMinSpec, chkExcludeAmbig,
+                phrWords, phrSeparator, chkCapitalize, chkAddNumber
+            ];
+            inputs.forEach(input => {
+                if (input) {
+                    input.addEventListener('change', generate);
+                    input.addEventListener('input', generate);
+                }
+            });
+
+            // Initial Generate
+            generate();
+        });
+    </script>
+</body>
+</html>

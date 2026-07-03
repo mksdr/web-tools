@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ko" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Tools Hub</title>
+    <meta name="description" content="매우 유용하고 아름다운 웹 도구 모음집">
+    <link rel="stylesheet" href="css/tailwind.css">
+    <script src="js/theme.js" defer></script>
+</head>
+<body class="bg-google-gray dark:bg-space-deep text-google-text dark:text-gray-100 transition-colors duration-300 min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="border-b border-gray-200 dark:border-white/10 bg-white/60 dark:bg-space-card/50 backdrop-blur-xl sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-space-accent flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 21l8.982-11.795H14l1.813-5.109L7 15.904h2.813z"/>
+                    </svg>
+                </div>
+                <span class="text-xl font-bold tracking-tight">WebTools</span>
+            </div>
+            
+            <!-- 3-Way Theme Switcher -->
+            <div class="inline-flex rounded-xl p-1 bg-gray-100 dark:bg-space-deep border border-gray-200 dark:border-white/5" id="theme-switcher">
+                <button data-theme="light" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center space-x-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+                    <span>Light</span>
+                </button>
+                <button data-theme="auto" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center space-x-1.5">
+                    <span>Auto</span>
+                </button>
+                <button data-theme="dark" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center space-x-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                    <span>Dark</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-16">
+        <div class="text-center mb-16 space-y-4">
+            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-gray-900 via-indigo-900 to-indigo-700 dark:from-white dark:via-gray-100 dark:to-space-accent bg-clip-text text-transparent">
+                로컬 전용 웹 도구 모음집
+            </h1>
+            <p class="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto text-base">
+                외부 네트워크 통신 없이 100% 브라우저 내에서만 안전하게 실행되는 유용하고 강력한 프론트엔드 도구 세트입니다.
+            </p>
+        </div>
+
+        <!-- Tool Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- QR Code Generator Card -->
+            <a href="qr/index.html" class="group block rounded-2xl bg-white/60 dark:bg-space-card/50 backdrop-blur-xl border border-white/20 dark:border-white/5 p-6 shadow-xl shadow-black/5 hover:shadow-2xl hover:shadow-indigo-500/10 hover:border-indigo-500/30 dark:hover:border-space-accent/30 transition-all duration-300 transform hover:-translate-y-1">
+                <div class="flex items-start justify-between">
+                    <div class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-500 dark:bg-space-accent/10 dark:text-space-accent flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5.01 16H5a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1h-.99z"/>
+                        </svg>
+                    </div>
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20 dark:text-emerald-400">
+                        준비 완료
+                    </span>
+                </div>
+                <h3 class="text-xl font-bold mt-6 mb-2 group-hover:text-indigo-600 dark:group-hover:text-space-accent transition-colors">
+                    QR 코드 생성기
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                    텍스트나 URL을 실시간 QR 코드로 변환합니다. 전경/배경 색상 커스터마이징, 오류 복원력 설정, 해상도 선택 및 PNG/SVG 다운로드를 지원합니다.
+                </p>
+            </a>
+
+            <!-- OTP Generator Card -->
+            <a href="otp/index.html" class="group block rounded-2xl bg-white/60 dark:bg-space-card/50 backdrop-blur-xl border border-white/20 dark:border-white/5 p-6 shadow-xl shadow-black/5 hover:shadow-2xl hover:shadow-indigo-500/10 hover:border-indigo-500/30 dark:hover:border-space-accent/30 transition-all duration-300 transform hover:-translate-y-1">
+                <div class="flex items-start justify-between">
+                    <div class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-500 dark:bg-space-accent/10 dark:text-space-accent flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                    </div>
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20 dark:text-emerald-400">
+                        준비 완료
+                    </span>
+                </div>
+                <h3 class="text-xl font-bold mt-6 mb-2 group-hover:text-indigo-600 dark:group-hover:text-space-accent transition-colors">
+                    OTP 생성기
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                    2단계 인증(2FA)을 위한 일회용 비밀번호를 생성합니다. TOTP/HOTP/스팀 모드, 알고리즘 및 주기 설정, 남은 시간 카운트다운을 실시간으로 확인합니다.
+                </p>
+            </a>
+
+            <!-- Password Generator Card -->
+            <a href="password-generator/index.html" class="group block rounded-2xl bg-white/60 dark:bg-space-card/50 backdrop-blur-xl border border-white/20 dark:border-white/5 p-6 shadow-xl shadow-black/5 hover:shadow-2xl hover:shadow-indigo-500/10 hover:border-indigo-500/30 dark:hover:border-space-accent/30 transition-all duration-300 transform hover:-translate-y-1">
+                <div class="flex items-start justify-between">
+                    <div class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-500 dark:bg-space-accent/10 dark:text-space-accent flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m-9 5h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01M7.5 8H16.5A1.5 1.5 0 0118 9.5V18A1.5 1.5 0 0116.5 19.5H7.5A1.5 1.5 0 016 18V9.5A1.5 1.5 0 017.5 8zM12 3v3"/>
+                        </svg>
+                    </div>
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20 dark:text-emerald-400">
+                        준비 완료
+                    </span>
+                </div>
+                <h3 class="text-xl font-bold mt-6 mb-2 group-hover:text-indigo-600 dark:group-hover:text-space-accent transition-colors">
+                    비밀번호 생성기
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                    강력한 일반 비밀번호 및 외우기 쉬운 단어 조합 패스프라이즈를 생성합니다. 최소 문자 개수 보장 및 모호한 문자 제외 옵션을 지원합니다.
+                </p>
+            </a>
+
+            <!-- Pixel Art Maker Card -->
+            <a href="pixel-art/index.html" class="group block rounded-2xl bg-white/60 dark:bg-space-card/50 backdrop-blur-xl border border-white/20 dark:border-white/5 p-6 shadow-xl shadow-black/5 hover:shadow-2xl hover:shadow-indigo-500/10 hover:border-indigo-500/30 dark:hover:border-space-accent/30 transition-all duration-300 transform hover:-translate-y-1">
+                <div class="flex items-start justify-between">
+                    <div class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-500 dark:bg-space-accent/10 dark:text-space-accent flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.582 2.186a.82.82 0 00-1.164 0l-5.6 5.6a.82.82 0 000 1.164l12.44 12.44a.82.82 0 001.164 0l5.6-5.6a.82.82 0 000-1.164L9.582 2.186zM4.5 19.5h15M10.5 7.5L16.5 13.5"/>
+                        </svg>
+                    </div>
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20 dark:text-emerald-400">
+                        준비 완료
+                    </span>
+                </div>
+                <h3 class="text-xl font-bold mt-6 mb-2 group-hover:text-indigo-600 dark:group-hover:text-space-accent transition-colors">
+                    픽셀 아트 에디터
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                    그리드 캔버스에 나만의 픽셀 아트를 디자인합니다. 드래그 연속 드로잉, 페인트통 채우기, 스포이트, 커스텀 팔레트 및 선명한 고해상도 PNG/SVG 내보내기를 지원합니다.
+                </p>
+            </a>
+
+            <!-- Other tools placeholder (grayed out or upcoming) -->
+            <div class="opacity-60 rounded-2xl border border-dashed border-gray-300 dark:border-white/10 p-6 flex flex-col items-center justify-center text-center h-full min-h-[220px]">
+                <div class="w-12 h-12 rounded-full border border-dashed border-gray-400 dark:border-white/20 flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <span class="text-sm font-semibold text-gray-500 dark:text-gray-400">도구 추가 예정</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-200 dark:border-white/10 py-8 mt-12 bg-white/30 dark:bg-space-card/20 backdrop-blur-sm">
+        <div class="max-w-6xl mx-auto px-4 text-center text-sm text-gray-500 dark:text-gray-400">
+            &copy; 2026 WebTools. 100% Client-Side &amp; Privacy-First.
+        </div>
+    </footer>
+</body>
+</html>
