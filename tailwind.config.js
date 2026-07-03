@@ -7,6 +7,8 @@ module.exports = {
     "./otp/**/*.html",
     "./password-generator/**/*.html",
     "./pixel-art/**/*.html",
+    "./gomoku/**/*.html",
+    "./gomoku/**/*.js",
     "./js/**/*.js"
   ],
   darkMode: 'class', // 클래스 기반 다크모드 (Auto/Light/Dark 제어용)
